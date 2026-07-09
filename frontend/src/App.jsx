@@ -1,4 +1,7 @@
 import React, { useState } from "react";
+
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import "./App.css";
 
 import Login from "./components/Login";
@@ -17,6 +20,7 @@ import ProfilePage from "./components/ProfilePage";
 function App() {
   const [activePage, setActivePage] = useState("dashboard");
   const [currentUser, setCurrentUser] = useState(getStoredUser());
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
 
   const pageInfo = getPageInfo(activePage);
 
@@ -33,53 +37,102 @@ function App() {
   };
 
   if (!currentUser) {
-    return <Login onLogin={handleLogin} />;
+    return (
+      <>
+        <Login onLogin={handleLogin} />
+
+        <ToastContainer
+          position="top-right"
+          autoClose={2500}
+          hideProgressBar={false}
+          newestOnTop
+          closeOnClick
+          pauseOnHover
+          draggable
+          theme="dark"
+        />
+      </>
+    );
   }
 
   return (
-    <div className="app-shell">
-      <Sidebar
-        activePage={activePage}
-        setActivePage={setActivePage}
-        currentUser={currentUser}
-        onLogout={handleLogout}
+    <>
+      <div
+        className={`min-h-screen w-full bg-slate-950 text-slate-100 grid ${
+          isSidebarCollapsed
+            ? "grid-cols-[78px_minmax(0,1fr)]"
+            : "grid-cols-[260px_minmax(0,1fr)]"
+        }`}
+      >
+        <Sidebar
+          activePage={activePage}
+          setActivePage={setActivePage}
+          currentUser={currentUser}
+          onLogout={handleLogout}
+          isCollapsed={isSidebarCollapsed}
+          onToggleSidebar={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+        />
+
+        <main className="min-w-0 min-h-screen overflow-x-hidden px-5 py-5 bg-[radial-gradient(circle_at_top_right,rgba(37,99,235,0.14),transparent_32%),radial-gradient(circle_at_bottom_left,rgba(124,58,237,0.12),transparent_30%)]">
+          <header className="mb-5 flex items-center justify-between gap-5 rounded-[24px] border border-slate-700/60 bg-slate-900/70 px-5 py-4 shadow-xl shadow-black/25">
+            <div className="min-w-0">
+              <span className="text-[11px] font-black uppercase tracking-[0.22em] text-sky-400">
+                GymTrack Pro
+              </span>
+
+              <h1 className="mt-1 text-3xl font-black tracking-tight text-slate-50">
+                {pageInfo.title}
+              </h1>
+
+              <p className="mt-1 max-w-2xl text-xs font-semibold leading-5 text-slate-400">
+                {pageInfo.description}
+              </p>
+            </div>
+
+            <div className="flex shrink-0 items-center gap-2">
+              <div className="hidden items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-2 text-xs font-extrabold text-emerald-300 lg:flex">
+                <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_14px_rgba(52,211,153,0.9)]" />
+                Aktif takip
+              </div>
+
+              <div className="flex items-center gap-2 rounded-full border border-slate-700/70 bg-slate-950/60 px-3 py-2 text-xs font-extrabold text-slate-100">
+                <span className="grid h-8 w-8 place-items-center rounded-full bg-gradient-to-br from-sky-400 via-blue-600 to-violet-600 text-white shadow-lg shadow-blue-700/30">
+                  {getInitial(currentUser.name)}
+                </span>
+
+                <span className="hidden max-w-[120px] truncate md:block">
+                  {currentUser.name}
+                </span>
+              </div>
+            </div>
+          </header>
+
+          <section className="min-w-0">
+            {activePage === "dashboard" && <Dashboard currentUser={currentUser} />}
+            {activePage === "workoutPlans" && <WorkoutPlans currentUser={currentUser} />}
+            {activePage === "workoutLogger" && <WorkoutLogger currentUser={currentUser} />}
+            {activePage === "dailyTracking" && <DailyTracking currentUser={currentUser} />}
+            {activePage === "analytics" && <Analytics currentUser={currentUser} />}
+            {activePage === "performance" && <Performance currentUser={currentUser} />}
+            {activePage === "measurements" && <Measurements currentUser={currentUser} />}
+            {activePage === "progressPhotos" && <ProgressPhotos currentUser={currentUser} />}
+            {activePage === "exercises" && <ExerciseList currentUser={currentUser} />}
+            {activePage === "profile" && <ProfilePage currentUser={currentUser} />}
+          </section>
+        </main>
+      </div>
+
+      <ToastContainer
+        position="top-right"
+        autoClose={2500}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        pauseOnHover
+        draggable
+        theme="dark"
       />
-
-      <main className="content">
-        <header className="page-header premium-header">
-          <div>
-            <span className="eyebrow">GymTrack Pro</span>
-            <h1>{pageInfo.title}</h1>
-            <p>{pageInfo.description}</p>
-          </div>
-
-          <div className="header-right">
-            <div className="status-pill">
-              <span className="status-dot"></span>
-              Aktif takip
-            </div>
-
-            <div className="user-pill">
-              <span>{getInitial(currentUser.name)}</span>
-              {currentUser.name}
-            </div>
-          </div>
-        </header>
-
-        <section className="page-content">
-          {activePage === "dashboard" && <Dashboard currentUser={currentUser} />}
-          {activePage === "workoutPlans" && <WorkoutPlans currentUser={currentUser} />}
-          {activePage === "workoutLogger" && <WorkoutLogger currentUser={currentUser} />}
-          {activePage === "dailyTracking" && <DailyTracking currentUser={currentUser} />}
-          {activePage === "analytics" && <Analytics currentUser={currentUser} />}
-          {activePage === "performance" && <Performance currentUser={currentUser} />}
-          {activePage === "measurements" && <Measurements currentUser={currentUser} />}
-          {activePage === "progressPhotos" && <ProgressPhotos currentUser={currentUser} />}
-          {activePage === "exercises" && <ExerciseList currentUser={currentUser} />}
-          {activePage === "profile" && <ProfilePage currentUser={currentUser} />}
-        </section>
-      </main>
-    </div>
+    </>
   );
 }
 

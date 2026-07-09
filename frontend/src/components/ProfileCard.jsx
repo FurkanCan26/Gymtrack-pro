@@ -3,8 +3,6 @@ import api from "../api/api";
 
 function ProfileCard() {
   const [profile, setProfile] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     getProfile();
@@ -12,110 +10,179 @@ function ProfileCard() {
 
   const getProfile = async () => {
     try {
-      setLoading(true);
-      setErrorMessage("");
-
       const response = await api.get("/profile/1");
       setProfile(response.data);
     } catch (error) {
-      console.error("Profil getirme hatası:", error);
-
-      if (error.response) {
-        setErrorMessage(error.response.data.message || "Profil alınamadı.");
-      } else {
-        setErrorMessage("Backend bağlantısı kurulamadı.");
-      }
-    } finally {
-      setLoading(false);
+      console.error("Profil kartı alınamadı:", error);
     }
   };
 
-  if (loading) {
-    return <div className="card">Profil yükleniyor...</div>;
-  }
-
-  if (errorMessage) {
-    return (
-      <div className="card">
-        <h2>Profil</h2>
-        <p className="muted">{errorMessage}</p>
-        <button type="button" onClick={getProfile}>
-          Tekrar Dene
-        </button>
-      </div>
-    );
-  }
-
   if (!profile) {
     return (
-      <div className="card">
-        <h2>Profil</h2>
-        <p className="muted">Profil bulunamadı.</p>
-      </div>
+      <section className="rounded-[24px] border border-slate-700/60 bg-slate-900/70 p-5 shadow-xl shadow-black/20">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <span className="text-[11px] font-black uppercase tracking-[0.18em] text-sky-300">
+              Profil
+            </span>
+
+            <h2 className="mt-1 text-xl font-black text-slate-50">
+              Profil Bilgileri
+            </h2>
+          </div>
+
+          <span className="rounded-full border border-yellow-400/20 bg-yellow-500/10 px-3 py-1.5 text-xs font-black text-yellow-200">
+            Veri yok
+          </span>
+        </div>
+
+        <p className="mt-4 text-xs font-semibold leading-5 text-slate-400">
+          Profil bilgilerin henüz yüklenmedi veya oluşturulmadı.
+        </p>
+      </section>
     );
   }
 
   return (
-    <div className="card profile-card">
-      <h2>Profil</h2>
-
-      <div className="profile-grid">
+    <section className="rounded-[24px] border border-slate-700/60 bg-slate-900/70 p-5 shadow-xl shadow-black/20">
+      <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div>
-          <span>İsim</span>
-          <strong>{profile.name}</strong>
+          <span className="text-[11px] font-black uppercase tracking-[0.18em] text-sky-300">
+            Profil / Kalori
+          </span>
+
+          <h2 className="mt-1 text-xl font-black tracking-tight text-slate-50">
+            Kalori Profil Özeti
+          </h2>
+
+          <p className="mt-1 text-xs font-semibold leading-5 text-slate-400">
+            BMR, TDEE ve hedef kalorinin kısa özeti.
+          </p>
         </div>
 
-        <div>
-          <span>Yaş</span>
-          <strong>{profile.age}</strong>
-        </div>
-
-        <div>
-          <span>Boy</span>
-          <strong>{profile.height_cm} cm</strong>
-        </div>
-
-        <div>
-          <span>Kilo</span>
-          <strong>{profile.weight_kg} kg</strong>
-        </div>
-
-        <div>
-          <span>Yağ Oranı</span>
-          <strong>{profile.body_fat_percentage || "-"}%</strong>
-        </div>
-
-        <div>
-          <span>Hedef</span>
-          <strong>{translateGoal(profile.goal)}</strong>
-        </div>
+        <span className="w-fit rounded-full border border-emerald-400/20 bg-emerald-500/10 px-3 py-1.5 text-xs font-black text-emerald-200">
+          {getGoalLabel(profile.goal)}
+        </span>
       </div>
 
-      <div className="calorie-box">
-        <div>
-          <span>BMR</span>
-          <strong>{profile.bmr} kcal</strong>
-        </div>
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <MiniCard
+          label="Yaş"
+          value={profile.age || "-"}
+          description="Profil yaşı"
+        />
 
-        <div>
-          <span>TDEE</span>
-          <strong>{profile.tdee} kcal</strong>
-        </div>
+        <MiniCard
+          label="Boy"
+          value={profile.height_cm ? `${profile.height_cm} cm` : "-"}
+          description="Boy bilgisi"
+        />
 
-        <div>
-          <span>Hedef Kalori</span>
-          <strong>{profile.target_calories} kcal</strong>
-        </div>
+        <MiniCard
+          label="Kilo"
+          value={profile.weight_kg ? `${profile.weight_kg} kg` : "-"}
+          description="Güncel kilo"
+        />
+
+        <MiniCard
+          label="Aktivite"
+          value={getActivityLabel(profile.activity_level)}
+          description="Harcama çarpanı"
+        />
       </div>
+
+      <div className="mt-4 grid gap-4 md:grid-cols-3">
+        <ResultCard
+          label="BMR"
+          value={profile.bmr ? `${profile.bmr} kcal` : "-"}
+          description="Bazal metabolizma"
+          tone="blue"
+        />
+
+        <ResultCard
+          label="TDEE"
+          value={profile.tdee ? `${profile.tdee} kcal` : "-"}
+          description="Günlük enerji harcaması"
+          tone="violet"
+        />
+
+        <ResultCard
+          label="Hedef"
+          value={
+            profile.target_calories ? `${profile.target_calories} kcal` : "-"
+          }
+          description="Günlük hedef kalori"
+          tone="emerald"
+        />
+      </div>
+    </section>
+  );
+}
+
+function MiniCard({ label, value, description }) {
+  return (
+    <div className="rounded-xl border border-slate-700/60 bg-slate-950/45 p-4">
+      <span className="block text-xs font-bold text-slate-400">{label}</span>
+
+      <strong className="mt-1 block break-words text-lg font-black text-slate-50">
+        {value}
+      </strong>
+
+      <small className="mt-1 block text-xs font-semibold text-slate-500">
+        {description}
+      </small>
     </div>
   );
 }
 
-function translateGoal(goal) {
-  if (goal === "lose") return "Kilo Verme";
-  if (goal === "gain") return "Kilo Alma";
-  if (goal === "maintain") return "Koruma";
-  return goal || "-";
+function ResultCard({ label, value, description, tone = "blue" }) {
+  const tones = {
+    blue: "from-blue-600/16 to-slate-900 border-blue-400/20",
+    violet: "from-violet-600/16 to-slate-900 border-violet-400/20",
+    emerald: "from-emerald-600/16 to-slate-900 border-emerald-400/20",
+  };
+
+  return (
+    <div
+      className={`relative overflow-hidden rounded-[22px] border bg-gradient-to-br p-4 shadow-lg shadow-black/15 ${tones[tone]}`}
+    >
+      <div className="absolute -right-9 -top-9 h-24 w-24 rounded-full bg-white/5" />
+
+      <span className="relative text-xs font-bold text-slate-400">
+        {label}
+      </span>
+
+      <strong className="relative mt-2 block break-words text-xl font-black text-slate-50">
+        {value}
+      </strong>
+
+      <small className="relative mt-1 block text-xs font-semibold text-slate-500">
+        {description}
+      </small>
+    </div>
+  );
+}
+
+function getActivityLabel(value) {
+  const labels = {
+    sedentary: "Hareketsiz",
+    light: "Hafif aktif",
+    moderate: "Orta aktif",
+    active: "Aktif",
+    very_active: "Çok aktif",
+  };
+
+  return labels[value] || "Orta aktif";
+}
+
+function getGoalLabel(value) {
+  const labels = {
+    lose: "Kilo vermek",
+    maintain: "Korumak",
+    gain: "Kilo almak",
+  };
+
+  return labels[value] || "Korumak";
 }
 
 export default ProfileCard;
